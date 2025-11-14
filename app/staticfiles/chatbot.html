@@ -1,0 +1,379 @@
+{% load static %}
+{% csrf_token %}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatbot</title>
+    <style>
+        /* Navbar styles */
+        .navbar {
+            background-color: #333;
+            overflow: hidden;
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 1000;
+        }
+        .navbar a {
+            float: left;
+            display: block;
+            color: white;
+            text-align: center;
+            padding: 14px 16px;
+            text-decoration: none;
+            font-size: 17px;
+        }
+        .navbar a:hover {
+            background-color: #ddd;
+            color: black;
+        }
+        .navbar a.active {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+            margin-top: 50px; /* Để tránh bị navbar che */
+        }
+        .container {
+            display: flex;
+            width: 1000px;
+            height: 90vh;
+        }
+        .sidebar {
+            width: 250px;
+            background-color: #f5f5f5;
+            border-right: 1px solid #ccc;
+            display: none;
+            flex-direction: column;
+            padding: 10px;
+            overflow-y: auto;
+        }
+        .sidebar.active {
+            display: flex;
+        }
+        .sidebar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid #ccc;
+        }
+        .hamburger {
+            font-size: 24px;
+            cursor: pointer;
+            padding: 10px;
+        }
+        .new-chat-btn {
+            padding: 8px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px 0;
+        }
+        .new-chat-btn:hover {
+            background-color: #0056b3;
+        }
+        .chat-session {
+            padding: 10px;
+            margin: 5px 0;
+            background-color: #e5e5e5;
+            border-radius: 5px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .chat-session.active {
+            background-color: #d3e8ff;
+        }
+        .chat-session:hover {
+            background-color: #d5d5d5;
+        }
+        .chat-container {
+            flex: 1;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            background-color: white;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        .chat-header {
+            background-color: #f5f5f5;
+            padding: 15px;
+            border-bottom: 1px solid #ccc;
+            text-align: center;
+            font-weight: bold;
+            font-size: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        #chatbox {
+            flex: 1;
+            max-height: 700px;
+            overflow-y: auto;
+            padding: 20px;
+            background-color: #e5e5e5;
+            display: flex;
+            flex-direction: column;
+        }
+        .welcome-message {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 15px;
+            background-color: #f5f5f5;
+            padding: 10px;
+            border-radius: 10px;
+        }
+        .message-container {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+        .avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        .bot-avatar {
+            margin-right: 15px;
+        }
+        .user-avatar {
+            margin-left: 15px;
+        }
+        .message {
+            max-width: 80%;
+            padding: 12px 18px;
+            border-radius: 20px;
+            background-color: white;
+            font-size: 18px;
+            line-height: 1.5;
+            display: inline-block;
+        }
+        .user-message-container {
+            justify-content: flex-end;
+        }
+        .user-message {
+            background-color: #e3f2fd;
+        }
+        .sentiment {
+            font-size: 14px;
+            margin-left: 10px;
+            vertical-align: middle;
+        }
+        .sentiment.positive {
+            color: green;
+        }
+        .sentiment.negative {
+            color: red;
+        }
+        .sentiment.neutral {
+            color: gray;
+        }
+        #input-container {
+            display: flex;
+            padding: 15px;
+            border-top: 1px solid #ccc;
+        }
+        #input {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            outline: none;
+            font-size: 16px;
+        }
+        #input:focus {
+            border-color: #007bff;
+        }
+        button {
+            margin-left: 15px;
+            padding: 12px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <a href="/pomato/" class="active">Trang chủ</a>
+        <a href="/" onclick="return false;">Chatbot</a>
+    </div>
+    <div class="container">
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h3>Chat History</h3>
+                <span class="hamburger" onclick="toggleSidebar()">✕</span>
+            </div>
+            <button class="new-chat-btn" onclick="startNewChat()">New Chat</button>
+            {% for session in sessions %}
+                <div class="chat-session {% if session.session_key == current_session %}active{% endif %}" 
+                     onclick="loadChatSession('{{ session.session_key }}')">
+                    <span>Chat #{{ forloop.counter }} ({{ session.message_count }} messages)</span>
+                    <span>🗨️</span>
+                </div>
+            {% endfor %}
+        </div>
+        <div class="chat-container">
+            <div class="chat-header">
+                <span class="hamburger" onclick="toggleSidebar()">☰</span>
+                <span>Castorice</span>
+                <span></span> <!-- Spacer for alignment -->
+            </div>
+            <div id="chatbox">
+                <div class="welcome-message">
+                    <img src="{% static 'Castorice.jpg' %}" class="avatar bot-avatar" alt="Bot Avatar">
+                    <div class="message">Hello! I'm Amazon's product recommendation chatbot. Enter a keyword (e.g., 'headphones') or ask me (e.g., 'Tell me about B01AHB9CN2') to get started!</div>
+                </div>
+                {% for message in chat_history %}
+                    <div class="message-container {% if message.is_user %}user-message-container{% endif %}">
+                        {% if not message.is_user %}
+                            <img src="{% static 'Castorice.jpg' %}" class="avatar bot-avatar" alt="Bot Avatar">
+                        {% endif %}
+                        <div class="message {% if message.is_user %}user-message{% endif %}">
+                            {{ message.message }}
+                            {% if message.is_user and message.sentiment %}
+                                <span class="sentiment {{ message.sentiment }}">(Sentiment: {{ message.sentiment }})</span>
+                            {% endif %}
+                        </div>
+                        {% if message.is_user %}
+                            <img src="{% static 'Huey.jpg' %}" class="avatar user-avatar" alt="User Avatar">
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+            <div id="input-container">
+                <input id="input" type="text" placeholder="Nhập tin nhắn của bạn...">
+                <button onclick="sendMessage()">Gửi</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const chatbox = document.getElementById('chatbox');
+        const input = document.getElementById('input');
+        const sidebar = document.getElementById('sidebar');
+
+        function toggleSidebar() {
+            sidebar.classList.toggle('active');
+        }
+
+        function addMessage(message, isUser, sentiment = null) {
+            const messageContainer = document.createElement('div');
+            messageContainer.className = 'message-container';
+            if (isUser) {
+                messageContainer.classList.add('user-message-container');
+            }
+
+            const messageElement = document.createElement('div');
+            messageElement.innerText = message;
+            messageElement.className = 'message';
+            if (isUser) {
+                messageElement.classList.add('user-message');
+            }
+
+            if (isUser && sentiment) {
+                const sentimentElement = document.createElement('span');
+                sentimentElement.innerText = `(Sentiment: ${sentiment})`;
+                sentimentElement.className = `sentiment ${sentiment}`;
+                messageElement.appendChild(sentimentElement);
+            }
+
+            if (isUser) {
+                const userAvatar = document.createElement('img');
+                userAvatar.src = "{% static 'Huey.jpg' %}";
+                userAvatar.className = 'avatar user-avatar';
+                userAvatar.alt = 'User Avatar';
+                messageContainer.appendChild(messageElement);
+                messageContainer.appendChild(userAvatar);
+            } else {
+                const botAvatar = document.createElement('img');
+                botAvatar.src = "{% static 'Castorice.jpg' %}";
+                botAvatar.className = 'avatar bot-avatar';
+                botAvatar.alt = 'Bot Avatar';
+                messageContainer.appendChild(botAvatar);
+                messageContainer.appendChild(messageElement);
+            }
+
+            chatbox.appendChild(messageContainer);
+            chatbox.scrollTop = chatbox.scrollHeight;
+        }
+
+        async function sendMessage() {
+            const userMessage = input.value.trim();
+            if (!userMessage) return;
+
+            input.value = '';
+
+            try {
+                const response = await fetch('/chat/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: userMessage })
+                });
+                const data = await response.json();
+                addMessage(userMessage, true, data.sentiment);
+                addMessage(data.response, false);
+            } catch (error) {
+                addMessage('Lỗi: Không thể kết nối với server.', false);
+            }
+        }
+
+        async function startNewChat() {
+            try {
+                const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+                const response = await fetch('/new_chat/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrftoken
+                    },
+                    body: JSON.stringify({})
+                });
+                const data = await response.json();
+                if (data.status === 'success') {
+                    window.location.href = '/';
+                } else {
+                    alert('Error: ' + (data.error || 'Unknown error'));
+                }
+            } catch (error) {
+                alert('Error starting new chat. Please try again. Details: ' + error.message);
+            }
+        }
+
+        function loadChatSession(sessionKey) {
+            window.location.href = `/?session_key=${sessionKey}`;
+        }
+
+        input.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendMessage();
+        });
+
+        window.onload = function() {
+            chatbox.scrollTop = chatbox.scrollHeight;
+        };
+    </script>
+</body>
+</html>
