@@ -1,241 +1,156 @@
-# Amazon Product Chatbot 🤖
+<h1 align="center">
+Amazon Product Chatbot
+</h1>
 
-Một hệ thống chatbot thông minh được thiết kế để cung cấp khuyến nghị sản phẩm và hỗ trợ khách hàng bằng cách sử dụng dữ liệu sản phẩm Amazon và các mô hình học máy.
+<p align="center" style="color:gray;">
+(Chatbot tư vấn sản phẩm Amazon)
+</p>
 
-## 📋 Tổng Quan Dự Án
+<hr>
 
-Dự án này kết hợp **Xử Lý Ngôn Ngữ Tự Nhiên (NLP)** và **Học Máy (Machine Learning)** để tạo một chatbot hội thoại có khả năng:
+## MỤC LỤC
 
-- Khuyến nghị các sản phẩm Amazon chất lượng cao dựa trên truy vấn của người dùng
-- Phân tích tâm trạng người dùng trong thời gian thực
-- Phân loại ý định người dùng để xử lý phản hồi tốt hơn
-- Cung cấp thông tin sản phẩm chi tiết và xếp hạng
+- [GIỚI THIỆU TỔNG QUÁT](#giới-thiệu-tổng-quát)
+- [BỘ DỮ LIỆU](#bộ-dữ-liệu)
+- [CẤU TRÚC MÃ NGUỒN](#cấu-trúc-mã-nguồn)
+- [CÔNG NGHỆ TIÊU BIỂU](#công-nghệ-tiêu-biểu)
+- [KHỞI ĐỘNG DỰ ÁN](#khởi-động-dự-án)
+- [MỘT SỐ HÌNH ẢNH](#một-số-hình-ảnh)
 
-## 🏗️ Kiến Trúc Dự Án
+## GIỚI THIỆU TỔNG QUÁT
 
-### Ngăn Xếp Công Nghệ
+Đây là dự án xây dựng một **Web App có tích hợp Chatbot**, hỗ trợ người sử dụng các chức năng như:
 
-- **Framework Backend**: Django 5.2.8
-- **Học Máy**: scikit-learn, NLTK, spaCy
-- **Xử Lý Dữ Liệu**: Pandas, NumPy, pickle, joblib
-- **Cơ Sở Dữ Liệu**: SQLite3
-- **Thư Viện NLP**: NLTK VADER, spaCy, TF-IDF Vectorizer
-- **Frontend**: HTML5, CSS3, JavaScript, Bootstrap
+Bước đầu tiên của dự án là **tiền xử lý dữ liệu** hai tập dữ liệu về **Amazon** và **Bitext**, được thực hiện trên Kaggle để dễ dàng tương tác, và chỉ giữ lại những thuộc tính quan trọng. Từ đây, tải những tập dữ liệu này về và bắt đầu xây dựng ba Module quan trọng của dự án:
 
-## 🚀 Các Tính Năng
+1. **Intent Classification:** Nhận diện ý định từ yêu cầu của người dùng.
 
-### 1. **Khuyến Nghị Sản Phẩm Thông Minh**
+2. **Product Recommendation System:** Gợi ý sản phẩm dựa trên `ASIN` (mã sản phẩm) hoặc từ khoá (Keyword).
 
-- Sử dụng vectorization TF-IDF và độ tương tự cosine để tìm sản phẩm liên quan
-- Lọc theo xếp hạng và tỷ lệ tâm trạng tích cực
-- Hỗ trợ truy vấn tìm kiếm nâng cao (ví dụ: "tai nghe có xếp hạng > 4")
+3. **Sentiment Analysis**: Phân tích cảm xúc từ dữ liệu đầu vào của người dùng.
 
-### 2. **Phân Tích Tâm Trạng Người Dùng**
+Sau khi đã thực hiện ba Module trên, đóng gói những dữ liệu quan trọng để tái sử dụng trong Django Backend. Ta sẽ xây dựng nhiều tầng chức năng:
 
-- Phân loại tâm trạng trong thời gian thực (Tích Cực/Tiêu Cực/Không Xác Định)
-- Sử dụng mô hình Logistic Regression được huấn luyện với TF-IDF
-- Lưu trữ dữ liệu tâm trạng trong cơ sở dữ liệu để theo dõi hội thoại
+1. Tầng **Model** để lưu trữ lịch sử các đoạn hội thoại.
+2. Tầng **Service** để đưa ba Module vào Chatbot bằng nhiều Logic khác nhau
+3. Tầng **View** để nhận dữ liệu người dùng, Chatbot xử lý dữ liệu từ nhờ tầng Service, rồi đưa ra câu trả lời.
+4. Tầng **Template** để hiển thị giao diện tương tác với người dùng.
 
-### 3. **Nhận Dạng Ý Định**
+## BỘ DỮ LIỆU
 
-- Phân loại ý định người dùng từ bộ dữ liệu hỗ trợ khách hàng Bitext
-- 20+ ý định được xác định trước (ví dụ: 'đặt_hàng', 'theo_dõi_hàng', 'sự_cố_thanh_toán')
-- Cung cấp các phản hồi được huấn luyện trước từ cơ sở tri thức
+Đường dẫn Dataset Amazon: https://www.kaggle.com/datasets/datafiniti/consumer-reviews-of-amazon-products<br>
+Đường dẫn Dataset Bitext: https://www.kaggle.com/datasets/bitext/bitext-gen-ai-chatbot-customer-support-dataset
 
-### 4. **Thông Tin Sản Phẩm**
+Tập dữ liệu đầu tiên của dự án này có tên là **Amazon**, chứa những đánh giá của người dùng về các sản phẩm trên Amazon. Tập dữ liệu này được sử dụng để trích xuất thông tin về chất lượng sản phẩm, bao gồm tỷ lệ đánh giá tích cực, điểm đánh giá trung bình và các thuộc tính mô tả sản phẩm. Ngoài ra, dữ liệu còn đóng vai trò làm cơ sở cho hệ thống gợi ý sản phẩm dựa trên từ khoá và mức độ hài lòng của người dùng.
 
-- Tìm kiếm sản phẩm dựa trên ASIN với thông tin chi tiết
-- Hiển thị: Tên sản phẩm, danh mục, xếp hạng trung bình, tỷ lệ tâm trạng tích cực
-- Khuyến nghị sản phẩm tương tự với điểm tương tự
+Tập dữ liệu thứ hai của dự án này có tên là **Bitext**, chứa các cặp câu hội thoại và nhãn ý định (Intent) liên quan đến hỗ trợ khách hàng. Tập dữ liệu này được sử dụng để huấn luyện mô hình phân loại ý định, giúp Chatbot nhận biết các yêu cầu chung của người dùng như chào hỏi, trợ giúp, hỏi thông tin, phản hồi tiêu cực hoặc các tình huống hội thoại không liên quan trực tiếp đến sản phẩm.
 
-### 5. **Quản Lý Phiên**
+Việc kết hợp hai tập dữ liệu **Amazon** và **Bitext** cho phép Chatbot vừa có khả năng tư vấn và gợi ý sản phẩm, vừa duy trì được tương tác hội thoại tự nhiên, phù hợp với các kịch bản hỗ trợ khách hàng trong môi trường thương mại điện tử.
 
-- Hỗ trợ nhiều phiên cho người dùng ẩn danh
-- Lưu trữ lịch sử trò chuyện trong cơ sở dữ liệu SQLite
-- Theo dõi hội thoại dựa trên phiên
+## CẤU TRÚC MÃ NGUỒN
 
-## 📊 Quy Trình Xử Lý Dữ Liệu
+[backend](backend/) : Chứa mã nguồn của Backend Django.<br>
+[data](data/) : Chứa các tập dữ liệu sạch.<br>
+[model](model/) : Chứa mô hình và các thành phần được đóng gói.<br>
+[notebook](notebook/) : Chứa các Notebook tiền xử lý dữ liệu và huấn luyện mô hình.<br>
+[picture](picture/) : Chứa danh mục hình ảnh.
 
-### Nguồn Dữ Liệu
+## CÔNG NGHỆ TIÊU BIỂU
 
-1. **Bộ Dữ Liệu Đánh Giá Amazon** (1429_1.csv)
+Một số công nghệ được áp dụng trong dự án: Python, Django, Scikit-learn, NLTK, spaCy, Pandas, NumPy, SQLite,
+HTML, CSS, JavaScript, Bootstrap
 
-   - Chứa: ASIN, tên sản phẩm, danh mục, văn bản đánh giá, xếp hạng
-   - Xử lý: Chọn 10 danh mục hàng đầu, làm sạch đánh giá
+## KHỞI ĐỘNG DỰ ÁN
 
-2. **Bộ Dữ Liệu Hỗ Trợ Khách Hàng Bitext** (27K phản hồi)
-   - Chứa: instruction, intent, response, category
-   - Xử lý: Chuẩn hóa ý định, lọc theo danh mục liên quan
-
-### Các Bước Xử Lý (Xem: `preprocessing.ipynb`)
-
-1. **Tải Dữ Liệu** - Đọc các tệp CSV thô
-2. **Làm Sạch** - Xử lý các giá trị bị thiếu, loại bỏ bản sao
-3. **Chuẩn Hóa** - Chuyển ý định thành chữ thường, chuẩn hóa định dạng
-4. **Lọc** - Chọn các danh mục hàng đầu và dữ liệu chất lượng cao
-5. **Trích Xuất Tính Năng** - Trích xuất từ khóa và siêu dữ liệu
-6. **Kết Quả** - Lưu các bộ dữ liệu đã làm sạch để huấn luyện mô hình
-
-## 🧠 Mô Hình Học Máy
-
-### 1. Bộ Phân Loại Ý Định
-
-**Tệp**: `intent_classifier.ipynb` → `model/intent_classifier.pkl`
-
-```python
-Pipeline:
-TfidfVectorizer() → LogisticRegression(max_iter=1000)
-
-Đầu vào: Văn bản hướng dẫn người dùng
-Đầu ra: Ý định dự đoán (ví dụ: 'đặt_hàng', 'theo_dõi_hàng')
-```
-
-- Được huấn luyện trên 27K ví dụ hỗ trợ khách hàng
-- Phân loại tin nhắn người dùng thành 20+ ý định dịch vụ
-- Được sử dụng để cung cấp các phản hồi được huấn luyện trước
-
-### 2. Bộ Phân Tích Tâm Trạng Người Dùng
-
-**Tệp**: `sentiment.ipynb` → `model/sentiment_model_user.pkl`
-
-```python
-Pipeline:
-TfidfVectorizer() → LogisticRegression()
-
-Đầu vào: Văn bản tin nhắn người dùng
-Đầu ra: Nhãn tâm trạng (Tích Cực/Tiêu Cực/Không Xác Định)
-```
-
-- Được huấn luyện trên văn bản hỗ trợ khách hàng với nhãn tâm trạng
-- Sử dụng phân loại nhị phân (Tích Cực/Tiêu Cực)
-- Quay lại "unknown" (không xác định) nếu mô hình không có sẵn
-
-### 3. Công Cụ Khuyến Nghị Sản Phẩm
-
-**Tệp**: `sentiment-review.ipynb`
-
-**Vectorization TF-IDF + Độ Tương Tự Cosine**:
+1. Mở thư mục dự án, sau đó vào phần Terminal
+2. Đi vào thư mục Backend:
 
 ```
-1. Vectorize tên/mô tả sản phẩm bằng TF-IDF
-2. Tính toán ma trận tương tự trước (tfidf_matrix.pkl)
-3. Để truy vấn người dùng, tính điểm tương tự
-4. Xếp hạng theo độ tương tự, lọc theo xếp hạng/tâm trạng
-5. Trả về các khuyến nghị hàng đầu
+cd backend
 ```
 
-**Tiêu Chí Lọc**:
-
-- Xếp hạng trung bình tối thiểu (nếu được chỉ định)
-- Tỷ lệ tâm trạng tích cực tối thiểu (nếu được chỉ định)
-- Chỉ các sản phẩm chất lượng cao (>80% tâm trạng tích cực)
-
-### 4. Phân Tích Tâm Trạng Sản Phẩm
-
-**Tệp**: `sentiment-review.ipynb`
+2. Nhập câu lệnh sau để chạy chương trình:
 
 ```
-1. Phân tích từng đánh giá bằng NLTK VADER SentimentIntensityAnalyzer
-2. Tổng hợp tâm trạng theo sản phẩm (ASIN)
-3. Tính tỷ lệ tích cực: (số_tích_cực / tổng_đánh_giá) * 100
-4. Lọc sản phẩm có tỷ lệ tích cực >80%
-5. Lưu: sentiment_summary.csv, high_quality_products.csv
+python manage.py runserver
 ```
 
-## 🎯 Luồng Logic Chatbot
+3. Truy cập ứng dụng tại đường dẫn:
 
 ```
-Đầu Vào Người Dùng
-    ↓
-1. Kiểm tra phản hồi Yes/No cho lời nhắc tương tự
-    ↓ (Yes) → Khuyến nghị sản phẩm tương tự
-    ↓ (No) → Kết thúc lời nhắc tương tự
-    ↓
-2. Dự đoán tâm trạng người dùng (Mô Hình Tâm Trạng)
-    ↓
-3. Lưu tin nhắn người dùng vào cơ sở dữ liệu
-    ↓
-4. Kiểm tra xem có phải là truy vấn liên quan đến sản phẩm không
-    ├─ ASIN được phát hiện → Tìm kiếm thông tin sản phẩm
-    │
-    ├─ Từ khóa được phát hiện → Tạo khuyến nghị
-    │
-    └─ Cụm từ chung → Trích xuất từ khóa & khuyến nghị
-    ↓
-5. Nếu không liên quan đến sản phẩm, dự đoán ý định (Bộ Phân Loại Ý Định)
-    ├─ Ý định khớp → Trả về phản hồi được huấn luyện trước
-    └─ Không khớp → Xuyên qua
-    ↓
-6. Áp dụng logic hội thoại
-    ├─ Chào hỏi → Tin nhắn chào mừng
-    ├─ Yêu cầu trợ giúp → Hướng dẫn
-    ├─ Truy vấn giá cả → Gợi ý tìm kiếm sản phẩm
-    └─ Khác → Phản hồi chung chung
-    ↓
-7. Lưu phản hồi của bot vào cơ sở dữ liệu
-    ↓
-Trả về phản hồi JSON với tin nhắn & tâm trạng
+http://127.0.0.1:8000/
 ```
 
-## 📈 Tổng Quan Bộ Dữ Liệu
+4. Thử nghiệm Chatbot với Test Case được minh hoạ trên **[MỘT SỐ HÌNH ẢNH](#một-số-hình-ảnh)**
 
-### Bộ Dữ Liệu Đánh Giá Amazon Đã Làm Sạch
+## MỘT SỐ HÌNH ẢNH
 
-- **Nguồn**: 1429_1.csv
-- **Kích Thước**: ~48,000+ sản phẩm
-- **Tính Năng**: asins, name, categories, reviews.text, reviews.rating
-- **Xử Lý**: Chọn 10 danh mục hàng đầu, loại bỏ bản sao
-- **Kết Quả**: `data/preprocessed-data/cleaned_amazon_reviews.csv`
+<p align="center">
+  <img src="picture/amazon_product_chatbot.png" width="800">
+</p>
 
-### Bộ Dữ Liệu Hỗ Trợ Khách Hàng Bitext
+<p align="center"><i>Pipeline tổng thể của dự án.</i></p>
 
-- **Nguồn**: 27K phản hồi hỗ trợ
-- **Tính Năng**: instruction, intent, response, category
-- **Ý Định**: 20+ danh mục (đặt_hàng, theo_dõi_hàng, sự_cố_thanh_toán, v.v.)
-- **Xử Lý**: Chuẩn hóa ý định, lọc các giá trị bị thiếu
-- **Kết Quả**: `data/preprocessed-data/bitext_cleaned.csv`
+<br>
 
-### Kết Quả Phân Tích Tâm Trạng
+<p align="center">
+  <img src="picture/intent_classification.png" width="800">
+</p>
 
-- **Kết Quả**: `data/new-data/sentiment_summary.csv`
-  - Cột: asins, positive_count, total_reviews, positive_ratio
-- **Sản Phẩm Chất Lượng Cao**: `data/new-data/high_quality_products.csv`
-  - Đã Lọc: positive_ratio > 80%
+<p align="center"><i>Pipeline của Intent Classification.</i></p>
 
-## 📝 Ví Dụ Sử Dụng
+<br>
 
-### Ví Dụ 1: Tìm Kiếm Sản Phẩm
+<p align="center">
+  <img src="picture/product_recommendation_system.png" width="800">
+</p>
 
-```
-User: "Find me headphones"
-Bot: "Based on your request, here are some highly rated products:
-- Sony WH-1000XM4 (Positive rating ratio: 92%, Average rating: 4.5)
-- Bose QuietComfort 45 (Positive rating ratio: 88%, Average rating: 4.3)
-- Apple AirPods Pro (Positive rating ratio: 95%, Average rating: 4.7)
-Would you like more details?"
-```
+<p align="center"><i>Pipeline của Product Recommendation System.</i></p>
 
-### Ví Dụ 2: Tìm Kiếm ASIN
+<br>
 
-```
-User: "Tell me about B01AHB9CN2"
-Bot: "Here is the information about Amazon Kindle Fire:
-Positive rating ratio 87%, Average rating: 4.0.
-Would you like to see similar products?"
-```
+<p align="center">
+  <img src="picture/sentiment_analysis.png" width="800">
+</p>
 
-### Ví Dụ 3: Tìm Kiếm Nâng Cao
+<p align="center"><i>Pipeline của Sentiment Analysis.</i></p>
 
-```
-User: "Show me laptops with rating > 4.5"
-Bot: "Based on your request, here are some highly rated products:
-[Filtered results with rating ≥ 4.5]"
-```
+<br>
 
-### Ví Dụ 4: Hỗ Trợ Khách Hàng
+<p align="center">
+  <img src="picture/initial_interface.png" width="800">
+</p>
 
-```
-User: "How do I place an order?"
-Bot: "You can place an order by browsing products and adding them to your cart..."
-(Sử dụng phản hồi được huấn luyện trước từ bộ dữ liệu Bitext)
-```
+<p align="center"><i>Giao diện của dự án.</i></p>
+
+<br>
+
+<p align="center">
+  <img src="picture/chat_history_interface.png" width="800">
+</p>
+
+<p align="center"><i>Lịch sử trò chuyện trên giao diện.</i></p>
+
+<br>
+
+<p align="center">
+  <img src="picture/asin_result_interface.png" width="800">
+</p>
+
+<p align="center"><i>Kết quả khi nhập mã sản phẩm trên giao diện.</i></p>
+
+<br>
+
+<p align="center">
+  <img src="picture/keyword_result_interface.png" width="800">
+</p>
+
+<p align="center"><i>Kết quả khi nhập từ khoá trên giao diện.</i></p>
+
+<br>
+
+<p align="center">
+  <img src="picture/sentiment_result_interface.png" width="800">
+</p>
+
+<p align="center"><i>Kết quả nhận diện cảm xúc trên giao diện.</i></p>
